@@ -115,6 +115,7 @@ module.exports = {
   parallel: require('os').cpus().length > 1,
 
   devServer: {
+    port: 8005, // 设置开发服务器端口为 8005
     // 配置多个代理
   },
   pluginOptions: {
