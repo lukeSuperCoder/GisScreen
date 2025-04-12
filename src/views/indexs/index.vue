@@ -27,12 +27,12 @@
         <LeftBottom />
       </ItemWrap>
     </div>
-    <div class="contetn_center">
+    <!-- <div class="contetn_center">
       <CenterMap class="contetn_center_top" />
       <ItemWrap class="contetn_center-bottom" title="安装计划">
         <CenterBottom />
       </ItemWrap>
-    </div>
+    </div> -->
     <div class="contetn_right">
       <ItemWrap
         class="contetn_left-bottom contetn_lr-item"
@@ -54,6 +54,9 @@
         <RightBottom />
       </ItemWrap>
     </div>
+    <div class="contetn_screen">
+      <ScreenMap />
+    </div>
   </div>
 </template>
 
@@ -66,6 +69,7 @@ import CenterBottom from "./center-bottom.vue";
 import RightTop from "./right-top.vue";
 import RightCenter from "./right-center.vue";
 import RightBottom from "./right-bottom.vue";
+import ScreenMap from '@/components/screen-map/screen-map.vue'
 
 export default {
   components: {
@@ -77,6 +81,7 @@ export default {
     RightCenter,
     RightBottom,
     CenterBottom,
+    ScreenMap
   },
   data() {
     return {
@@ -91,7 +96,9 @@ export default {
   created() {
   },
 
-  mounted() {},
+  mounted() {
+
+  },
   methods: {
   
   },
@@ -122,6 +129,7 @@ export default {
 
   // 中间
   .contetn_center {
+    z-index: 100;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
@@ -134,12 +142,20 @@ export default {
   //左边 右边 结构一样
   .contetn_left,
   .contetn_right {
+    z-index: 100;
     display: flex;
     flex-direction: column;
     justify-content: space-around;
     position: relative;
+  }
 
-  
+  .contetn_screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
   }
 }
 
