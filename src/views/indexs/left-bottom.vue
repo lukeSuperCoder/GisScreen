@@ -1,174 +1,172 @@
 <!--
  * @Author: daidai
- * @Date: 2022-03-01 09:43:37
+ * @Date: 2022-03-01 15:27:58
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2022-09-09 11:40:22
- * @FilePath: \web-pc\src\pages\big-screen\view\indexs\left-bottom.vue
+ * @LastEditTime: 2022-05-07 11:24:14
+ * @FilePath: \web-pc\src\pages\big-screen\view\indexs\right-center.vue
 -->
 <template>
-  <div
-    v-if="pageflag"
-    class="left_boottom_wrap beautify-scroll-def"
-    :class="{ 'overflow-y-auto': !sbtxSwiperFlag }"
-  >
-    <component :is="components" :data="list" :class-option="defaultOption">
-      <ul class="left_boottom">
-        <li class="left_boottom_item" v-for="(item, i) in list" :key="i">
-          <span class="orderNum doudong">{{ i + 1 }}</span>
-          <div class="inner_right">
-            <div class="dibu"></div>
-            <div class="flex">
-              <div class="info">
-                <span class="labels">设备ID：</span>
-                <span class="contents zhuyao doudong wangguan">
-                  {{ item.gatewayno }}</span
-                >
-              </div>
-              <div class="info">
-                <span class="labels">时间：</span>
-                <span class="contents " style="font-size: 12px">
-                  {{ item.createTime }}</span
-                >
-              </div>
+  <div v-if="pageflag" class="right_center_wrap beautify-scroll-def">
+    <ul class="right_center">
+      <li class="right_center_item" v-for="(item, i) in list" :key="i">
+        <span class="orderNum">{{ i + 1 }}</span>
+        <div class="inner_right">
+          <div class="dibu"></div>
+          <div class="flex">
+            <div class="info">
+              <span class="labels ">点赞数：</span>
+              <span class="contents zhuyao"> {{ item.attitudes_count || 0 }}</span>
             </div>
-
-              <span
-                class="types doudong"
-                :class="{
-                  typeRed: item.onlineState == 0,
-                  typeGreen: item.onlineState == 1,
-                }"
-                >{{ item.onlineState == 1 ? "上线" : "下线" }}</span
-              >
-
-            <div class="info addresswrap">
-              <span class="labels">地址：</span>
-              <span class="contents ciyao" style="font-size: 12px">
-                {{ addressHandle(item) }}</span
-              >
+            <div class="info">
+              <span class="labels">转发数：</span>
+              <span class="contents "> {{ item.comments_count || 0 }}</span>
+            </div>
+            <div class="info">
+              <span class="labels">评论数：</span>
+              <span class="contents warning"> {{ item.reposts_count || 0}}</span>
             </div>
           </div>
-        </li>
-      </ul>
-    </component>
-  </div>
 
-  <Reacquire v-else @onclick="getData" style="line-height: 200px" />
+          <div class="flex">
+            <div class="info">
+              <span class="labels"> 舆情地点：</span>
+              <span class="contents ciyao" style="font-size:12px"> {{ item.ip || '未知' }}</span>
+            </div>
+            <div class="info time">
+              <span class="labels">发布时间：</span>
+              <span class="contents" style="font-size:12px"> {{ new Date(item.created_at).toLocaleString() }}</span>
+            </div>
+          </div>
+          <div class="flex">
+            <div class="info overflow-ellipsis">
+              <span class="labels">舆情内容：</span>
+              <span class="contents ciyao" :title="item.text" :class="{ warning: item.text }" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"> {{ item.text || '' }}</span>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <!-- <Reacquire v-else @onclick="getData" style="line-height:200px" /> -->
 </template>
 
 <script>
-import { currentGET } from "api";
-import vueSeamlessScroll from "vue-seamless-scroll"; // vue2引入方式
-import Kong from "../../components/kong.vue";
+import { currentGETById } from 'api/modules'
+import Kong from '../../components/kong.vue'
+
 export default {
-  components: { vueSeamlessScroll, Kong },
+  components: { Kong },
   data() {
     return {
       list: [],
       pageflag: true,
-      components: vueSeamlessScroll,
-      defaultOption: {
-        ...this.$store.state.setting.defaultOption,
-        singleHeight: 240,
-        limitMoveNum: 5, 
-        step: 0,
-      },
+      page: 1,
+      perPage: 50,
+      total: 0,
+      loading: false
     };
   },
+  props: {
+  },
   computed: {
-    sbtxSwiperFlag() {
-      let sbtxSwiper = this.$store.state.setting.sbtxSwiper;
-      if (sbtxSwiper) {
-        this.components = vueSeamlessScroll;
-      } else {
-        this.components = Kong;
-      }
-      return sbtxSwiper;
-    },
+    getCurrentId() {
+      return this.$store.state.setting.id;
+    }
   },
   created() {
-    
-  },
-
-  mounted() {
     this.getData();
+    // 添加滚动事件监听
+    window.addEventListener('scroll', this.handleScroll);
+  },
+  watch: {
+    getCurrentId: {
+      handler() {
+        this.getData();
+      },
+    }
+  },
+  beforeDestroy() {
+    // 移除滚动事件监听
+    window.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
-    addressHandle(item) {
-      let name = item.provinceName;
-      if (item.cityName) {
-        name += "/" + item.cityName;
-        if (item.countyName) {
-          name += "/" + item.countyName;
-        }
-      }
-      return name;
-    },
     getData() {
+      if (this.loading) return;
+      this.loading = true;
       this.pageflag = true;
-      // this.pageflag =false
-      currentGET("big3", { limitNum: 20 }).then((res) => {
-        console.log("设备提醒", res);
-        if (res.success) {
-          this.countUserNumData = res.data;
-          this.list = res.data.list;
-          let timer = setTimeout(() => {
-            clearTimeout(timer);
-            this.defaultOption.step =
-              this.$store.state.setting.defaultOption.step;
-          }, this.$store.state.setting.defaultOption.waitTime);
+      currentGETById('getListByGeom', this.getCurrentId).then(res => {
+        console.log('范围内舆情信息列表', res);
+        if (res.code === 200) {
+          this.list = res.data;
         } else {
           this.pageflag = false;
-          this.$Message({
-            text: res.msg,
-            type: "warning",
-          });
+          // this.$Message.warning(res.msg);
         }
+        this.loading = false;
+      }).catch(() => {
+        this.loading = false;
       });
     },
-  },
+    handleScroll() {
+      const scrollElement = document.querySelector('.right_center_wrap');
+      if (!scrollElement) return;
+      
+      const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+      // 当滚动到底部时加载更多
+      if (scrollHeight - scrollTop - clientHeight < 50 && !this.loading && this.list.length < this.total) {
+        this.page++;
+        this.getData();
+      }
+    }
+  }
 };
 </script>
+
 <style lang='scss' scoped>
-.left_boottom_wrap {
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-}
-
-.doudong {
-  //  vertical-align:middle;
-  overflow: hidden;
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  -ms-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-.overflow-y-auto {
-  overflow-y: auto;
-}
-
-.left_boottom {
+.right_center {
   width: 100%;
   height: 100%;
 
-  .left_boottom_item {
+  .overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .right_center_item {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    height: auto;
+    padding: 10px;
     font-size: 14px;
-    margin: 10px 0;
+    color: #fff;
+
     .orderNum {
-      margin: 0 16px 0 -20px;
+      margin: 0 20px 0 -10px;
+    }
+
+    .inner_right {
+      position: relative;
+      height: 100%;
+      width: 400px;
+      flex-shrink: 0;
+      line-height: 1.5;
+
+      .dibu {
+        position: absolute;
+        height: 2px;
+        width: 104%;
+        background-image: url("../../assets/img/zuo_xuxian.png");
+        bottom: -12px;
+        left: -2%;
+        background-size: cover;
+      }
     }
 
     .info {
       margin-right: 10px;
       display: flex;
       align-items: center;
-      color: #fff;
 
       .labels {
         flex-shrink: 0;
@@ -186,70 +184,29 @@ export default {
       }
 
       .warning {
-        color: #e6a23c;
+        color: #E6A23C;
         font-size: 15px;
       }
     }
+  }
+}
 
-    .inner_right {
-      position: relative;
-      height: 100%;
-      width: 380px;
-      flex-shrink: 0;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      .dibu {
-        position: absolute;
-        height: 2px;
-        width: 104%;
-        background-image: url("../../assets/img/zuo_xuxian.png");
-        bottom: -10px;
-        left: -2%;
-        background-size: cover;
-      }
-      .addresswrap {
-        width: 100%;
-        display: flex;
-        margin-top: 8px;
-      }
-    }
+.right_center_wrap {
+  overflow-y: auto;
+  width: 100%;
+  height: 250px;
+  padding-right: 10px;
 
-    .wangguan {
-      color: #1890ff;
-      font-weight: 900;
-      font-size: 15px;
-      width: 80px;
-      flex-shrink: 0;
-    }
-
-
-    .time {
-      font-size: 12px;
-      // color: rgba(211, 210, 210,.8);
-      color: #fff;
-    }
-
-    .address {
-      font-size: 12px;
-      cursor: pointer;
-      // @include text-overflow(1);
-    }
-
-    .types {
-      width: 30px;
-      flex-shrink: 0;
-    }
-
-    .typeRed {
-      color: #fc1a1a;
-    }
-
-    .typeGreen {
-      color: #29fc29;
-    }
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 }
 </style>

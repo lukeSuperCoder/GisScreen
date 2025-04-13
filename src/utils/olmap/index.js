@@ -7,13 +7,15 @@ import GeomLayer from './layerManage/geomLayer';
 import ClusterMakerLayer from './layerManage/clusterMakerLayer';
 import MapMeasure from './markManage/measure';
 import MapMark from './markManage/mark';
+import View from './view/view';
+import Popup from './popup/popup';
 export class OlMap {
     constructor(targetId, options) {
         let that = this;
         that.options = {
             targetId: targetId,
             baseMapName: 'OSM',
-            center: [116.397428, 39.90923],
+            center: [101.397428, 39.90923],
             extent: transformExtent([-360, -90, 360, 90], "EPSG:4326", "EPSG:3857"),
             zoom: 4,
             minZoom:1,
@@ -32,6 +34,8 @@ export class OlMap {
             this.clusterMakerLayer = new ClusterMakerLayer(this.coreMap.map, this.options);
             this.mark = new MapMark(this.coreMap.map, this.options);
             this.measure = new MapMeasure(this.coreMap.map, this.options);
+            this.view = new View(this.coreMap.map, this.options);
+            this.popup = new Popup(this.coreMap.map, this.options);
         }
     }
 }

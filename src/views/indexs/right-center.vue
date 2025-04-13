@@ -16,20 +16,24 @@ import { currentGET } from 'api/modules'
 export default {
   data() {
     return {
-      gatewayno: '',
+      page: 1,
+      total: 0,
+      perPage: 8, // 每页显示数量
       config: {
         showValue: true,
         unit: "次",
         data: []
       },
-
     };
   },
   created() {
     this.getData()
-
   },
   computed: {
+    // 计算总页数
+    totalPages() {
+      return Math.ceil(this.total / this.perPage)
+    }
   },
   mounted() { },
   beforeDestroy() {
@@ -54,17 +58,27 @@ export default {
     },
     getData() {
       this.pageflag = true
-      // this.pageflag =false
-      currentGET('big7', { gatewayno: this.gatewayno }).then(res => {
-
+      currentGET('big7', { 
+        page: this.page, 
+        per_page: this.perPage 
+      }).then(res => {
         if (!this.timer) {
-          console.log('报警排名', res);
+          console.log('舆情地区统计', res);
         }
-        if (res.success) {
+        if (res.code === 200) {
           this.config = {
             ...this.config,
             data: res.data
           }
+          this.total = res.total;
+          
+          // 判断是否需要翻页
+          if (this.page >= this.totalPages) {
+            this.page = 1 // 回到第一页
+          } else {
+            this.page++ // 下一页
+          }
+          
           this.switper()
         } else {
           this.pageflag = false

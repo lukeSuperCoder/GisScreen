@@ -7,18 +7,17 @@
  */
 
 
-import {    currentList,
+import {    
+    currentList,
     currentPage,
     currentSave,
     currentUpdate,
     currentDelete,
     currentSelect,
     currentSelectList,
-
     currentPOST,
     currentGET,
     currentApi
-
 } from './modules'
 import { 
     GETNOBASE,

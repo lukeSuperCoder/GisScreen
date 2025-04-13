@@ -15,16 +15,16 @@
             <div class="dibu"></div>
             <div class="flex">
               <div class="info">
-                <span class="labels ">设备ID：</span>
-                <span class="contents zhuyao"> {{ item.gatewayno }}</span>
+                <span class="labels ">点赞数：</span>
+                <span class="contents zhuyao"> {{ item.attitudes_count || 0 }}</span>
               </div>
               <div class="info">
-                <span class="labels">型号：</span>
-                <span class="contents "> {{ item.terminalno }}</span>
+                <span class="labels">转发数：</span>
+                <span class="contents "> {{ item.comments_count || 0 }}</span>
               </div>
               <div class="info">
-                <span class="labels">告警值：</span>
-                <span class="contents warning"> {{ item.alertvalue | montionFilter }}</span>
+                <span class="labels">评论数：</span>
+                <span class="contents warning"> {{ item.reposts_count || 0}}</span>
               </div>
             </div>
 
@@ -32,21 +32,19 @@
             <div class="flex">
 
               <div class="info">
-                <span class="labels"> 地址：</span>
-                <span class="contents ciyao" style="font-size:12px"> {{ item.provinceName }}/{{ item.cityName }}/{{ item.countyName }}</span>
+                <span class="labels"> 舆情地点：</span>
+                <span class="contents ciyao" style="font-size:12px"> {{ item.ip || '未知' }}</span>
               </div>
               <div class="info time">
-                <span class="labels">时间：</span>
-                <span class="contents" style="font-size:12px"> {{ item.createtime }}</span>
+                <span class="labels">发布时间：</span>
+                <span class="contents" style="font-size:12px"> {{ new Date(item.created_at).toLocaleString() }}</span>
               </div>
 
             </div>
             <div class="flex">
-
-              <div class="info">
-                <span class="labels">报警内容：</span>
-                <span class="contents ciyao" :class="{ warning: item.alertdetail }"> {{ item.alertdetail || '无'
-                }}</span>
+              <div class="info overflow-ellipsis">
+                <span class="labels">舆情内容：</span>
+                <span class="contents ciyao" :title="item.text" :class="{ warning: item.text }" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"> {{ item.text || '' }}</span>
               </div>
             </div>
           </div>
@@ -98,10 +96,10 @@ export default {
     getData() {
       this.pageflag = true
       // this.pageflag =false
-      currentGET('big5', { limitNum: 50 }).then(res => {
-        console.log('实时预警', res);
-        if (res.success) {
-          this.list = res.data.list
+      currentGET('big5', { page: 1, per_page: 50 }).then(res => {
+        console.log('舆情信息列表', res);
+        if (res.code===200) {
+          this.list = res.data.items;
           let timer = setTimeout(() => {
               clearTimeout(timer)
               this.defaultOption.step=this.$store.state.setting.defaultOption.step
@@ -121,6 +119,11 @@ export default {
   width: 100%;
   height: 100%;
 
+  .overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .right_center_item {
     display: flex;
     align-items: center;

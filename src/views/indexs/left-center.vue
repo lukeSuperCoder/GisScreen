@@ -1,231 +1,228 @@
 <!--
  * @Author: daidai
- * @Date: 2022-02-28 16:16:42
+ * @Date: 2022-03-01 15:27:58
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2022-10-25 09:18:22
- * @FilePath: \web-pc\src\pages\big-screen\view\indexs\left-center.vue
+ * @LastEditTime: 2022-05-07 11:24:14
+ * @FilePath: \web-pc\src\pages\big-screen\view\indexs\right-center.vue
 -->
 <template>
-  <Echart id="leftCenter" :options="options" class="left_center_inner" v-if="pageflag" ref="charts" />
-  <Reacquire v-else @onclick="getData" style="line-height:200px">
-    重新获取
-  </Reacquire>
+  <div v-if="pageflag" class="right_center_wrap beautify-scroll-def">
+    <ul class="right_center">
+      <li class="right_center_item" v-for="(item, i) in list" :key="i">
+        <div class="inner_right">
+          <div class="flex">
+            <div class="info">
+              <span class="labels ">点赞数：</span>
+              <span class="contents zhuyao"> {{ item.attitudes_count || 0 }}</span>
+            </div>
+            <div class="info">
+              <span class="labels">转发数：</span>
+              <span class="contents "> {{ item.comments_count || 0 }}</span>
+            </div>
+            <div class="info">
+              <span class="labels">评论数：</span>
+              <span class="contents warning"> {{ item.reposts_count || 0}}</span>
+            </div>
+          </div>
+
+          <div class="flex">
+            <div class="info">
+              <span class="labels"> 舆情地点：</span>
+              <span class="contents ciyao" style="font-size:12px"> {{ item.ip || '未知' }}</span>
+            </div>
+            <div class="info time">
+              <span class="labels">发布时间：</span>
+              <span class="contents" style="font-size:12px"> {{ new Date(item.created_at).toLocaleString() }}</span>
+            </div>
+          </div>
+          <div class="flex">
+            <div class="info">
+              <span class="labels"> 作者：</span>
+              <span class="contents ciyao" style="font-size:12px"> {{ item.screen_name || '未知' }}</span>
+            </div>
+            <div class="info time">
+              <span class="labels">舆情来源：</span>
+              <span class="contents" style="font-size:12px"> {{ item.source || '未知' }}</span>
+            </div>
+          </div>
+          <div class="flex">
+            <div class="info">
+              <span class="labels">热点词：</span>
+              <span class="contents ciyao" :title="item.topics" :class="{ warning: item.topics }"> {{ item.topics || '' }}</span>
+            </div>
+          </div>
+          <div class="flex">
+            <div class="info">
+              <span class="labels">舆情内容：</span>
+              <span class="contents ciyao" :title="item.text" :class="{ warning: item.text }" style=""> {{ item.text || '' }}</span>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <!-- <Reacquire v-else @onclick="getData" style="line-height:200px" /> -->
 </template>
 
 <script>
-import { currentGET } from 'api/modules'
+import { currentGETById } from 'api/modules'
+import Kong from '../../components/kong.vue'
+
 export default {
+  components: { Kong },
   data() {
     return {
-      options: {},
-      countUserNumData: {
-        lockNum: 0,
-        onlineNum: 0,
-        offlineNum: 0,
-        totalNum: 0
-      },
+      list: [],
       pageflag: true,
-      timer: null
+      page: 1,
+      perPage: 50,
+      total: 0,
+      loading: false
     };
   },
-  created() {
-    this.getData()
+  props: {
   },
-  mounted() {
+  computed: {
+    getCurrentId() {
+      return this.$store.state.setting.id;
+    }
+  },
+  created() {
+    this.getData();
+    // 添加滚动事件监听
+    window.addEventListener('scroll', this.handleScroll);
+  },
+  watch: {
+    getCurrentId: {
+      handler() {
+        this.getData();
+      },
+    }
   },
   beforeDestroy() {
-    this.clearData()
-
+    // 移除滚动事件监听
+    window.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
-    clearData() {
-      if (this.timer) {
-        clearInterval(this.timer)
-        this.timer = null
-      }
-    },
     getData() {
-      this.pageflag = true
-      // this.pageflag =false
-
-      currentGET('big1').then(res => {
-        //只打印一次
-        if (!this.timer) {
-          console.log("设备总览", res);
-        }
-        if (res.success) {
-          this.countUserNumData = res.data
-          this.$nextTick(() => {
-            this.init()
-          })
-
+      if (this.loading) return;
+      this.loading = true;
+      this.pageflag = true;
+      currentGETById('getListById', this.getCurrentId).then(res => {
+        console.log('范围内舆情信息列表', res);
+        if (res.code === 200) {
+          this.list = [res.data];
         } else {
-          this.pageflag = false
-          this.$Message({
-            text: res.msg,
-            type: 'warning'
-          })
+          this.pageflag = false;
+          // this.$Message.warning(res.msg);
         }
-      })
+        this.loading = false;
+      }).catch(() => {
+        this.loading = false;
+      });
     },
-    //轮询
-    switper() {
-      if (this.timer) {
-        return
+    handleScroll() {
+      const scrollElement = document.querySelector('.right_center_wrap');
+      if (!scrollElement) return;
+      
+      const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+      // 当滚动到底部时加载更多
+      if (scrollHeight - scrollTop - clientHeight < 50 && !this.loading && this.list.length < this.total) {
+        this.page++;
+        this.getData();
       }
-      let looper = (a) => {
-        this.getData()
-      };
-      this.timer = setInterval(looper, this.$store.state.setting.echartsAutoTime);
-      let myChart = this.$refs.charts.chart
-      myChart.on('mouseover', params => {
-        this.clearData()
-      });
-      myChart.on('mouseout', params => {
-        this.timer = setInterval(looper, this.$store.state.setting.echartsAutoTime);
-      });
-    },
-    init() {
-      let total = this.countUserNumData.totalNum;
-      let colors = ["#ECA444", "#33A1DB", "#56B557"];
-      let piedata = {
-        name: "用户总览",
-        type: "pie",
-        radius: ["42%", "65%"],
-        avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 4,
-          borderColor: "rgba(0,0,0,0)",
-          borderWidth: 2,
-        },
-
-        color: colors,
-        data: [
-          // {
-          //   value: 0,
-          //   name: "告警",
-          //   label: {
-          //     shadowColor: colors[0],
-          //   },
-          // },
-          {
-            value: this.countUserNumData.lockNum,
-            name: "锁定",
-            label: {
-              shadowColor: colors[0],
-            },
-          },
-          {
-            value: this.countUserNumData.onlineNum,
-            name: "在线",
-            label: {
-              shadowColor: colors[2],
-            },
-          },
-          {
-            value: this.countUserNumData.offlineNum,
-            name: "离线",
-            label: {
-              shadowColor: colors[1],
-            },
-          },
-
-
-        ],
-      };
-      this.options = {
-        title: {
-          // zlevel: 0,
-          text: ["{value|" + total + "}", "{name|总数}"].join("\n"),
-          top: "center",
-          left: "center",
-          textStyle: {
-            rich: {
-              value: {
-                color: "#ffffff",
-                fontSize: 24,
-                fontWeight: "bold",
-                lineHeight: 20,
-              },
-              name: {
-                color: "#ffffff",
-                lineHeight: 20,
-              },
-            },
-          },
-        },
-        tooltip: {
-          trigger: "item",
-          backgroundColor: "rgba(0,0,0,.6)",
-          borderColor: "rgba(147, 235, 248, .8)",
-          textStyle: {
-            color: "#FFF",
-          },
-        },
-        legend: {
-          show: false,
-          top: "5%",
-          left: "center",
-        },
-        series: [
-          //展示圆点
-          {
-            ...piedata,
-            tooltip: { show: true },
-            label: {
-              formatter: "   {b|{b}}   \n   {c|{c}个}   {per|{d}%}  ",
-              //   position: "outside",
-              rich: {
-                b: {
-                  color: "#fff",
-                  fontSize: 12,
-                  lineHeight: 26,
-                },
-                c: {
-                  color: "#31ABE3",
-                  fontSize: 14,
-                },
-                per: {
-                  color: "#31ABE3",
-                  fontSize: 14,
-                },
-              },
-            },
-            labelLine: {
-              length: 20, // 第一段线 长度
-              length2: 36, // 第二段线 长度
-              show: true,
-            
-            },
-              emphasis: {
-                show: true,
-              },
-          },
-          {
-            ...piedata,
-            tooltip: { show: true },
-            itemStyle: {},
-            label: {
-              backgroundColor: "inherit", //圆点颜色，auto：映射的系列色
-              height: 0,
-              width: 0,
-              lineHeight: 0,
-              borderRadius: 2.5,
-              shadowBlur: 8,
-              shadowColor: "auto",
-              padding: [2.5, -2.5, 2.5, -2.5],
-            },
-            labelLine: {
-              length: 20, // 第一段线 长度
-              length2: 36, // 第二段线 长度
-              show: false,
-            },
-          },
-        ],
-      };
-    },
-  },
+    }
+  }
 };
 </script>
+
 <style lang='scss' scoped>
+.right_center {
+  width: 100%;
+  height: 100%;
+
+  .overflow-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .right_center_item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    padding: 10px;
+    font-size: 14px;
+    color: #fff;
+
+    .orderNum {
+      margin: 0 20px 0 -10px;
+    }
+
+    .inner_right {
+      position: relative;
+      height: 100%;
+      width: 400px;
+      flex-shrink: 0;
+      line-height: 1.5;
+
+      .dibu {
+        position: absolute;
+        height: 2px;
+        width: 104%;
+        background-image: url("../../assets/img/zuo_xuxian.png");
+        bottom: -12px;
+        left: -2%;
+        background-size: cover;
+      }
+    }
+
+    .info {
+      margin-right: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: start;
+
+      .labels {
+        width: 60px;
+        flex-shrink: 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .zhuyao {
+        color: $primary-color;
+        font-size: 15px;
+      }
+
+      .ciyao {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .warning {
+        color: #E6A23C;
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+.right_center_wrap {
+  overflow-y: auto;
+  width: 100%;
+  height: 250px;
+  padding-right: 10px;
+
+  /* 美化滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
 </style>

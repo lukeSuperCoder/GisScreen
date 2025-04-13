@@ -3,7 +3,7 @@ import { Point } from 'ol/geom';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { Style, Icon, Stroke, Fill, Circle } from 'ol/style';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat,toLonLat } from 'ol/proj';
 
 class MarkerLayer {
   constructor(mapInstance, options) {
@@ -38,7 +38,9 @@ class MarkerLayer {
           width: 2
         }),
         offsetY: -20
-      }
+      },
+      // 点击回调函数
+      onClick: null
     };
     this.options = Object.assign(this.options, options);
 
@@ -51,6 +53,52 @@ class MarkerLayer {
 
     // 将图层添加到地图
     this.map.addLayer(this.vectorLayer);
+
+    // 绑定点击事件
+    this.map.on('click', this._handleClick.bind(this));
+  }
+
+  /**
+   * 处理点击事件
+   * @private
+   */
+  _handleClick(event) {
+    const feature = this.map.forEachFeatureAtPixel(event.pixel, (feature) => {
+      return feature;
+    });
+
+    if (feature) {
+      const featureData = {
+        type: 'marker',
+        properties: feature.getProperties(),
+        geometry: toLonLat(feature.getGeometry().getCoordinates())
+      };
+      
+      // 调用回调函数
+      if (typeof this.options.onClick === 'function') {
+        this.options.onClick(featureData, event);
+      }
+    }
+  }
+
+  /**
+   * 设置点击回调函数
+   * @param {Function} callback 回调函数
+   */
+  setOnClick(callback) {
+    this.options.onClick = callback;
+  }
+
+  /**
+   * 销毁图层
+   */
+  destroy() {
+    // 移除点击事件
+    this.map.un('click', this._handleClick.bind(this));
+    // 移除图层
+    this.map.removeLayer(this.vectorLayer);
+    // 清除数据源
+    this.vectorSource.clear();
   }
 
   /**
@@ -148,6 +196,19 @@ class MarkerLayer {
   removeMarker(feature) {
     this.vectorSource.removeFeature(feature);
   }
+  /**
+   * 设置最小缩放级别
+   * @param {number} minZoom 最小缩放级别
+   */
+    setMinZoom(minZoom) {
+      this.vectorLayer.setMinZoom(minZoom);
+    }
+  /**
+   * 设置最大缩放级别
+   * @param {number} maxZoom 最大缩放级别
+   */
+  setMaxZoom(maxZoom) {
+    this.vectorLayer.setMaxZoom(maxZoom);
+  }
 }
-
 export default MarkerLayer;

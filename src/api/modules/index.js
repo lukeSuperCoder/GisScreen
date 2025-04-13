@@ -11,12 +11,14 @@ export const paramType ={
     'big1':"/bigscreen/countUserNum", //用户总览
     'big2':"/bigscreen/countDeviceNum", //设备总览 
     'big3':"/bigscreen/sbtx", //设备提醒
-    'big4':"/bigscreen/alarmNum", //报警次数
-    'big5':'/bigscreen/ssyj',//实时预警 
+    'big4':"/api/weibo/time_stats", //报警次数
+    'big5':'/api/weibo',//实时预警 
     'big6':'/bigscreen/installationPlan',// 安装计划
-    'big7':'/bigscreen/ranking',// 报警排名
+    'big7':'/api/weibo_geom/ip_stats',// 报警排名
     'big8':'/bigscreen/centermap',// //中间地图
-
+    'mapList': '/api/weibo_geom/all_points', //地图上点
+    'getListById': '/api/weibo/with_geom', //根据类型获取列表
+    'getListByGeom': '/api/weibo_geom/within', //查询范围内舆情
 }
 /******************      通用增删改查       ********************* */
 /**
@@ -83,6 +85,9 @@ export const currentPage =  (key,param)=> {
  export const currentPOST=  (key,param)=> {
     return API.POST(paramType[key], param)
 }
+export const currentGETById=  (key,id)=> {
+    return API.GET(paramType[key]+'/'+id)
+}
 // 通用接口集合
 export const currentApi={
     currentList,
@@ -93,5 +98,6 @@ export const currentApi={
     currentSelect,
     currentSelectList,
     currentPOST,
-    currentGET
+    currentGET,
+    currentGETById
 }

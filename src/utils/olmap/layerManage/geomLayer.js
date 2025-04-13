@@ -3,7 +3,7 @@ import { LineString, Polygon, Circle as CircleGeom } from 'ol/geom';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { Style, Stroke, Fill, Circle } from 'ol/style';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 
 class GeomLayer {
   constructor(mapInstance, options) {
@@ -143,6 +143,16 @@ class GeomLayer {
    */
   getGeoms() {
     return this.vectorSource.getFeatures();
+  }
+
+  /**
+   * 销毁图层
+   */
+  destroy() {
+    // 移除图层
+    this.map.removeLayer(this.vectorLayer);
+    // 清除数据源
+    this.vectorSource.clear();
   }
 }
 

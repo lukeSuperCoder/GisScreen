@@ -1,0 +1,15 @@
+.ol-zoom {
+    top: 7rem;
+    right: 0.5rem;
+    left: auto;
+}
+.ol-full-screen {
+    top: 5rem;
+    right: 0.5rem;
+    left: auto;
+}
+.ol-scale-line {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: auto;
+}

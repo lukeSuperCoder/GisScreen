@@ -51,9 +51,9 @@ export default {
       // this.pageflag =false
       currentGET("big4").then((res) => {
         if (!this.timer) {
-          console.log("报警次数", res);
+          console.log("舆情时间统计", res);
         }
-        if (res.success) {
+        if (res.code===200) {
           this.countUserNumData = res.data;
           this.$nextTick(() => {
             this.init(res.data.dateList, res.data.numList, res.data.numList2),
@@ -74,7 +74,7 @@ export default {
         return;
       }
       let looper = (a) => {
-        this.getData();
+        // this.getData();
       };
       this.timer = setInterval(
         looper,
@@ -156,7 +156,7 @@ export default {
             type: "line",
             smooth: true,
             symbol: "none", //去除点
-            name: "报警1次数",
+            name: "高频舆情",
             color: "rgba(252,144,16,.7)",
             areaStyle: {
                 //右，下，左，上
@@ -197,7 +197,7 @@ export default {
                     padding: [7, 14],
                     borderWidth: 0.5,
                     borderColor: "rgba(252,144,16,.5)",
-                    formatter: "报警1：{c}",
+                    formatter: "高频舆情：{c}",
                   },
                 },
                 {
@@ -223,7 +223,7 @@ export default {
             type: "line",
             smooth: true,
             symbol: "none", //去除点
-            name: "报警2次数",
+            name: "普通舆情",
             color: "rgba(9,202,243,.7)",
             areaStyle: {
                 //右，下，左，上
@@ -264,7 +264,7 @@ export default {
                     borderRadius: 6,
                     borderColor: "rgba(9,202,243,.5)",
                     padding: [7, 14],
-                    formatter: "报警2：{c}",
+                    formatter: "普通舆情：{c}",
                     borderWidth: 0.5,
                   },
                 },

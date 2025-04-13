@@ -8,9 +8,10 @@
 import {isObject} from '@/lib/types'
 export default {
     state: () => ({
+        id:'',//当前选中的地图id
         sbtxSwiper: true,//设备提醒轮播
         ssyjSwiper:true,//实时预警轮播
-        isScale:true,//是否进行全局适配
+        isScale:false,//是否进行全局适配
         defaultOption: {
             step: 4.4, // 数值越大速度滚动越快
             hoverStop: true, // 是否开启鼠标悬停stop
@@ -24,7 +25,6 @@ export default {
           echartsAutoTime:3000,//echarts 图自动请求接口时间
     }),
     getters: {
-        //根据菜单路径获取 菜单信息
     },
     mutations: {
         initSwipers(state){
@@ -48,6 +48,9 @@ export default {
                 isScale:state.isScale
             }))
         },
+        updateId(state,id){
+            state.id=id
+        }
 
     },
     actions: {

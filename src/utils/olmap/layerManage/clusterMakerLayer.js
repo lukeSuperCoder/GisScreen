@@ -3,15 +3,20 @@ import { Point } from 'ol/geom';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { Style, Icon, Stroke, Fill, Circle, Text } from 'ol/style';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import Cluster from 'ol/source/Cluster';
 
 class ClusterMakerLayer {
   constructor(mapInstance, options) {
     this.map = mapInstance;
     this.options = {
+      //展示层级
+      minZoom: 1,
+      maxZoom: 6,
       // 聚合距离（像素）
       distance: 40,
+      // 点击回调函数
+      onClick: null,
       // 默认样式
       defaultStyle: new Style({
         image: new Circle({
@@ -25,14 +30,17 @@ class ClusterMakerLayer {
           })
         }),
         text: new Text({
-          font: '12px Microsoft YaHei',
+          font: 'bold 12px Microsoft YaHei',
           fill: new Fill({
             color: '#FFFFFF'
           }),
           stroke: new Stroke({
             color: '#000000',
             width: 2
-          })
+          }),
+          offsetY: 0,
+          textAlign: 'center',
+          textBaseline: 'middle'
         })
       }),
       // 聚合样式配置
@@ -50,6 +58,19 @@ class ClusterMakerLayer {
                 color: '#FFFFFF',
                 width: 2
               })
+            }),
+            text: new Text({
+              font: 'bold 12px Microsoft YaHei',
+              fill: new Fill({
+                color: '#FFFFFF'
+              }),
+              stroke: new Stroke({
+                color: '#000000',
+                width: 2
+              }),
+              offsetY: 0,
+              textAlign: 'center',
+              textBaseline: 'middle'
             })
           })
         },
@@ -66,6 +87,19 @@ class ClusterMakerLayer {
                 color: '#FFFFFF',
                 width: 2
               })
+            }),
+            text: new Text({
+              font: 'bold 14px Microsoft YaHei',
+              fill: new Fill({
+                color: '#FFFFFF'
+              }),
+              stroke: new Stroke({
+                color: '#000000',
+                width: 2
+              }),
+              offsetY: 0,
+              textAlign: 'center',
+              textBaseline: 'middle'
             })
           })
         },
@@ -82,6 +116,19 @@ class ClusterMakerLayer {
                 color: '#FFFFFF',
                 width: 2
               })
+            }),
+            text: new Text({
+              font: 'bold 16px Microsoft YaHei',
+              fill: new Fill({
+                color: '#FFFFFF'
+              }),
+              stroke: new Stroke({
+                color: '#000000',
+                width: 2
+              }),
+              offsetY: 0,
+              textAlign: 'center',
+              textBaseline: 'middle'
             })
           })
         }
@@ -102,11 +149,75 @@ class ClusterMakerLayer {
     this.vectorLayer = new VectorLayer({
       source: this.clusterSource,
       style: this._clusterStyle.bind(this),
-      zIndex: 10
+      zIndex: 10,
+      maxZoom: this.options.maxZoom,
+      minZoom: this.options.minZoom
     });
 
     // 将图层添加到地图
     this.map.addLayer(this.vectorLayer);
+
+    // 绑定点击事件
+    this.map.on('click', this._handleClick.bind(this));
+  }
+
+  /**
+   * 处理点击事件
+   * @private
+   */
+  _handleClick(event) {
+    const feature = this.map.forEachFeatureAtPixel(event.pixel, (feature) => {
+      return feature;
+    });
+
+    if (feature) {
+      const features = feature.get('features');
+      if (features && features.length > 0) {
+        // 如果是聚合点，返回所有聚合的要素
+        const featureData = features.map(f => ({
+          type: 'cluster',
+          properties: f.getProperties(),
+          geometry: toLonLat(f.getGeometry().getCoordinates())
+        }));
+        
+        // 调用回调函数
+        if (typeof this.options.onClick === 'function') {
+          this.options.onClick(featureData, event);
+        }
+      } else {
+        // 如果是单个点，返回单个要素
+        const featureData = {
+          type: 'point',
+          properties: feature.getProperties(),
+          geometry: feature.getGeometry().getCoordinates()
+        };
+        
+        // 调用回调函数
+        if (typeof this.options.onClick === 'function') {
+          this.options.onClick(featureData, event);
+        }
+      }
+    }
+  }
+
+  /**
+   * 设置点击回调函数
+   * @param {Function} callback 回调函数
+   */
+  setOnClick(callback) {
+    this.options.onClick = callback;
+  }
+
+  /**
+   * 销毁图层
+   */
+  destroy() {
+    // 移除点击事件
+    this.map.un('click', this._handleClick.bind(this));
+    // 移除图层
+    this.map.removeLayer(this.vectorLayer);
+    // 清除数据源
+    this.source.clear();
   }
 
   /**
@@ -164,8 +275,8 @@ class ClusterMakerLayer {
 
     // 设置文本
     const text = style.getText();
-    if (text) {
-      text.setText(size > 1 ? size.toString() : '');
+    if (text && size > 1) {
+      text.setText(size.toString());
     }
 
     return style;
@@ -192,6 +303,20 @@ class ClusterMakerLayer {
    */
   setDistance(distance) {
     this.clusterSource.setDistance(distance);
+  }
+  /**
+   * 设置最小缩放级别
+   * @param {number} minZoom 最小缩放级别
+   */
+  setMinZoom(minZoom) {
+    this.vectorLayer.setMinZoom(minZoom);
+  }
+  /**
+   * 设置最大缩放级别
+   * @param {number} maxZoom 最大缩放级别
+   */
+  setMaxZoom(maxZoom) {
+    this.vectorLayer.setMaxZoom(maxZoom);
   }
 }
 

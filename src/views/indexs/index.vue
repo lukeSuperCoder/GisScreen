@@ -7,26 +7,7 @@
 -->
 <template>
   <div class="contents">
-    <div class="contetn_left">
-      <div class="pagetab">
-        <!-- <div class="item">实时监测</div> -->
-        
-      </div>
-      <ItemWrap class="contetn_left-top contetn_lr-item" title="设备总览">
-        <LeftTop/>
-    
-      </ItemWrap>
-      <ItemWrap class="contetn_left-center contetn_lr-item" title="用户总览">
-        <LeftCenter />
-      </ItemWrap>
-      <ItemWrap
-        class="contetn_left-bottom contetn_lr-item"
-        title="设备提醒"
-        style="padding: 0 10px 16px 10px"
-      >
-        <LeftBottom />
-      </ItemWrap>
-    </div>
+   
     <!-- <div class="contetn_center">
       <CenterMap class="contetn_center_top" />
       <ItemWrap class="contetn_center-bottom" title="安装计划">
@@ -36,22 +17,46 @@
     <div class="contetn_right">
       <ItemWrap
         class="contetn_left-bottom contetn_lr-item"
-        title="报警次数"
+        title="舆情时间统计"
       >
         <RightTop />
       </ItemWrap>
       <ItemWrap
         class="contetn_left-bottom contetn_lr-item"
-        title="报警排名(TOP8)"
+        title="舆情地区统计"
         style="padding: 0 10px 16px 10px"
       >
         <RightCenter />
       </ItemWrap>
       <ItemWrap
         class="contetn_left-bottom contetn_lr-item"
-        title="数据统计图 "
+        title="舆情信息看板"
       >
         <RightBottom />
+      </ItemWrap>
+    </div>
+    <div class="contetn_left-card">
+      <!-- <div class="pagetab">
+        <div class="item">实时监测</div>
+      </div>
+      <ItemWrap class="contetn_left-top contetn_lr-item" title="设备总览">
+        <LeftTop/>
+      </ItemWrap>
+       -->
+       <ItemWrap
+       @close="closeDialog"
+        v-show="isShow"
+        isClose
+        class="contetn_left-center contetn_lr-item" title="舆情信息详情">
+        <LeftCenter />
+      </ItemWrap>
+      <ItemWrap
+        v-show="isShow"
+        class="contetn_left-top contetn_lr-item"
+        title="舆情空间关联"
+        style="padding: 0 10px 16px 10px"
+      >
+        <LeftBottom />
       </ItemWrap>
     </div>
     <div class="contetn_screen">
@@ -85,7 +90,7 @@ export default {
   },
   data() {
     return {
-    
+      isShow: false
     };
   },
   filters: {
@@ -95,12 +100,28 @@ export default {
   },
   created() {
   },
-
+  computed: {
+    getCurrentId() {
+      return this.$store.state.setting.id;
+    }
+  },
+  watch: {
+    getCurrentId: {
+      handler(val) {
+        if(val){
+          this.isShow = true;
+        }
+      },
+    }
+  },
   mounted() {
 
   },
   methods: {
-  
+    closeDialog(){
+      this.isShow = false;
+      olMap.geomLayer.clearGeoms();
+    }
   },
 };
 </script>
@@ -147,6 +168,16 @@ export default {
     flex-direction: column;
     justify-content: space-around;
     position: relative;
+  }
+  .contetn_left-card{
+    height: 60%;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    right: 5rem;
+    gap: 20px;
   }
 
   .contetn_screen {
